@@ -197,8 +197,8 @@ void SetWifi(String ssid, String pswd, int use_wifi)
 
 void setup()
 {
-	Serial.begin(115200);
-	BTMessanger.init();
+    Serial.begin(115200);
+    BTMessanger.init();
     Relay.init();
 
 }
