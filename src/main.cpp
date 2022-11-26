@@ -118,13 +118,11 @@ class TimerClass : public CommandExecutor {
             );  
             Serial.println("Таймер запущен");
         }
-};
+} Timer;
 
 
 AsyncUDP udp;
 
-
-TimerClass Timer;
 
 
 int USE_WIFI = 0;
@@ -211,12 +209,10 @@ void loop() {
 
 		if (incStr == "1") {
 			Relay.turnOn();
-			isTimerActive = false;
 		}
 
 		if (incStr == "0") {
 			Relay.turnOff();
-			isTimerActive = false;
 		}
 
 		if (incStr[0] == '!') {
