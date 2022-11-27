@@ -9,58 +9,21 @@
 //#define RELAY 22 // пин реле
 
 
-class BTMessangerClass {
-	private:
-		// Проверка, что Bluetooth доступен на плате
-		#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-		#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-		#endif
-
-		BluetoothSerial SerialBT;
-		const char commandTerminateChar = '#';
-		
-
-	public:
-        typedef enum {
-            OK = 0,
-        } ReturnCode;
-
-		void init() {
-			SerialBT.begin("Солнышко ОУФК-01М");
-			Serial.println("The device started, now you can pair it with bluetooth!");
-		}
-
-		String getRequest() {
-			sendResponse(ReturnCode::OK);
-			return SerialBT.readStringUntil(commandTerminateChar);
-		}
-
-		void sendResponse(int resp) {
-			SerialBT.println(resp);
-		}
-
-		bool isAvailable() {
-			return SerialBT.available();
-		}
-
-} BTMessanger;
-
-
-
-
-
 class CommandExecutor {
 	protected:
-		virtual void SplitCommand(String command) = 0;
+        const char CommandSeparatorChar = ':';
+		virtual void SplitCommand(String &command) = 0;
+    
+    public:
+        virtual void ExecuteCommand(String &command) = 0;
 };
-
 
 
 class RelayController : public CommandExecutor {
 	private:
         const uint8_t RELAY_PIN = 22;
 
-		void SplitCommand(String command) override {
+		void SplitCommand(String &command) override {
 			
 		}	
 
@@ -68,6 +31,16 @@ class RelayController : public CommandExecutor {
         void init() {
             pinMode(RELAY_PIN, OUTPUT);
         }
+
+        void ExecuteCommand(String &command) override {
+			if (command.substring(0, command.indexOf(':')) == "on") {
+                this->turnOn();
+            }
+
+            else if (command.substring(0, command.indexOf(':')) == "off") {
+                this->turnOff();
+            }
+		}	
 
 		void turnOn() {
 			digitalWrite(RELAY_PIN, HIGH);
@@ -87,7 +60,7 @@ class TimerClass : public CommandExecutor {
     private:
         int time = 0;
 
-		void SplitCommand(String command) override {
+		void SplitCommand(String &command) override {
 			
 		}
 
@@ -105,20 +78,117 @@ class TimerClass : public CommandExecutor {
     public:
         bool isActive = false;
 
+        void ExecuteCommand(String &command) override {
+			
+		}
+
         void setRelayOnTimer(int time) {
             this->time = time;
 
             xTaskCreate(
-                this->KeepingRelayOnTask,   /* Указатель на функцию, которая реализует задачу. */
-                "Relay on keeper",          /* Текстовое имя задачи. Этот параметр нужен только для упрощения отладки. */
-                1000,                       /* Глубина стека - самые маленькие микроконтроллеры будут использовать значение намного меньше, чем здесь указано. */
+                this->KeepingRelayOnTask,   /* Task method pointer*/
+                "Relay on keeper",          /* Task name*/
+                1000,                       /* Stack deepth*/
                 (void*) this,               /* Pointer on class object itself */
-                1,                          /* Задача будет запущена с приоритетом 1. */
-                NULL                        /* Мы не будем использовать хендл задачи. */
+                2,                          /* Priority*/
+                NULL                        /* Task handle*/
             );  
             Serial.println("Таймер запущен");
         }
 } Timer;
+
+
+class CommandDistributorClass : CommandExecutor{
+    private:
+    
+        String objName;
+        CommandExecutor* TargetObject; 
+
+        CommandExecutor* SelectObjViaName() {
+            if (objName == "relay")
+                return &Relay;
+
+            if (objName == "timer")
+                return &Timer;
+
+        }	
+
+        void SplitCommand(String &command) override {
+			this->objName = command.substring(0, command.indexOf(':')); /*spliting first part of the command*/
+            command = command.substring(command.indexOf(':') + 1); 
+		}
+
+        
+
+    public:
+        void ExecuteCommand(String &command) override {
+			SplitCommand(command);
+            TargetObject = SelectObjViaName();
+            TargetObject->ExecuteCommand(command);
+		}	
+
+} CommandDistributor;
+
+
+class BTMessangerClass {
+	private:
+		// Проверка, что Bluetooth доступен на плате
+		#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+		#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+		#endif
+
+		BluetoothSerial SerialBT;
+		const char commandTerminateChar = '#';
+
+        static void WaitForCommandTask(void *pvParameters) {
+            BTMessangerClass* self = (BTMessangerClass*)pvParameters;
+            for (;;) {
+                if (self->isAvailable()) {
+                    String command = self->getRequest();
+                    CommandDistributor.ExecuteCommand(command);
+                }
+                vTaskDelay(10);
+            }
+        }
+		
+
+	public:
+        typedef enum {
+            OK = 0,
+        } ReturnCode;
+
+		void init() {
+			SerialBT.begin("Солнышко ОУФК-01М");
+			Serial.println("The device started, now you can pair it with bluetooth!");
+		}
+
+        void startWaitingCommand() {
+            xTaskCreate(
+                this->WaitForCommandTask,                           /* Task method pointer*/
+                "Waiter for Bluetooth command task",                /* Task name*/
+                1000,                                               /* Stack deepth*/
+                (void*) this,                                       /* Pointer on class object itself */
+                1,                                                   /* Priority*/
+                NULL                                                /* Task handle*/
+            ); 
+        }
+
+		String getRequest() {
+			sendResponse(ReturnCode::OK);
+			return SerialBT.readStringUntil(commandTerminateChar);
+		}
+
+		void sendResponse(int resp) {
+			SerialBT.println(resp);
+		}
+
+		bool isAvailable() {
+			return SerialBT.available();
+		}
+
+} BTMessanger;
+
+
 
 
 AsyncUDP udp;
@@ -200,66 +270,67 @@ void setup()
     Serial.begin(115200);
     BTMessanger.init();
     Relay.init();
+    BTMessanger.startWaitingCommand();
 
 }
 
 void loop() {
-	if (BTMessanger.isAvailable()) {
-		String incStr = BTMessanger.getRequest();
+// 	if (BTMessanger.isAvailable()) {
+// 		String incStr = BTMessanger.getRequest();
 
-		if (incStr == "1") {
-			Relay.turnOn();
-		}
+// 		if (incStr == "1") {
+// 			Relay.turnOn();
+// 		}
 
-		if (incStr == "0") {
-			Relay.turnOff();
-		}
+// 		if (incStr == "0") {
+// 			Relay.turnOff();
+// 		}
 
-		if (incStr[0] == '!') {
-			String BTReaded = incStr.substring(1);
-			Serial.println(BTReaded);
-            Serial.println(getValue(BTReaded, ':', 0));
-			if (getValue(BTReaded, ':', 0) == String("setwifi"))
-			{
-				SetWifi(getValue(BTReaded, ':', 1), getValue(BTReaded, ':', 2), getValue(BTReaded, ':', 3).toInt());
-			}
+// 		if (incStr[0] == '!') {
+// 			String BTReaded = incStr.substring(1);
+// 			Serial.println(BTReaded);
+//             Serial.println(getValue(BTReaded, ':', 0));
+// 			if (getValue(BTReaded, ':', 0) == String("setwifi"))
+// 			{
+// 				SetWifi(getValue(BTReaded, ':', 1), getValue(BTReaded, ':', 2), getValue(BTReaded, ':', 3).toInt());
+// 			}
 
-			if (getValue(BTReaded, ':', 0) == String("checkssid"))
-			{
-				Serial.println("Checking SSID...");
-				Serial.println(CheckWifiSsid());
-			}
+// 			if (getValue(BTReaded, ':', 0) == String("checkssid"))
+// 			{
+// 				Serial.println("Checking SSID...");
+// 				Serial.println(CheckWifiSsid());
+// 			}
 
-			if (getValue(BTReaded, ':', 0) == String("checkpswd"))
-			{
-				Serial.println("Checking password...");
-				Serial.println(CheckWifiPswd());
-			}
+// 			if (getValue(BTReaded, ':', 0) == String("checkpswd"))
+// 			{
+// 				Serial.println("Checking password...");
+// 				Serial.println(CheckWifiPswd());
+// 			}
 
-			if (getValue(BTReaded, ':', 0) == String("checkuse_wifi"))
-			{
-				Serial.println("Checking use_wifi...");
-				Serial.println(CheckWifiUse_Wifi());
-			}
+// 			if (getValue(BTReaded, ':', 0) == String("checkuse_wifi"))
+// 			{
+// 				Serial.println("Checking use_wifi...");
+// 				Serial.println(CheckWifiUse_Wifi());
+// 			}
 
-			if (getValue(BTReaded, ':', 0) == String("checktime"))
-			{
-				if (isWIFIConnected)
-				{
-				Serial.println(timeClient.getFormattedTime());
-				}
-			}
+// 			if (getValue(BTReaded, ':', 0) == String("checktime"))
+// 			{
+// 				if (isWIFIConnected)
+// 				{
+// 				Serial.println(timeClient.getFormattedTime());
+// 				}
+// 			}
 
-			if (getValue(BTReaded, ':', 0) == String("settimer"))
-			{
-                Timer.setRelayOnTimer(5);
-				// end_time = millis() + getValue(BTReaded, ':', 1).toInt() * 1000;
-				// isTimerActive = true;
-				// digitalWrite(RELAY, HIGH);
-				// Serial.println("\t On. Таймер запущен");
-			}
-		}
+// 			if (getValue(BTReaded, ':', 0) == String("settimer"))
+// 			{
+//                 Timer.setRelayOnTimer(5);
+// 				// end_time = millis() + getValue(BTReaded, ':', 1).toInt() * 1000;
+// 				// isTimerActive = true;
+// 				// digitalWrite(RELAY, HIGH);
+// 				// Serial.println("\t On. Таймер запущен");
+// 			}
+// 		}
 
-		delay(20);
-  }
+// 		delay(20);
+//   }
 }
