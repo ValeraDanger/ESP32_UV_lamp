@@ -2,7 +2,7 @@
 
 IMPORTANT: changed interaction protocol. Now you command is
  `<controlled object>:<action>:<other>#`.
-(Only relay control is able now. )
+
 
 
 Where:
