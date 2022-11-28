@@ -6,13 +6,12 @@
 #include <WiFiUdp.h>
 
 #define EEPROM_SIZE 512
-//#define RELAY 22 // пин реле
 
 
 class CommandExecutor {
 	protected:
         const char CommandSeparatorChar = ':';
-		virtual void SplitCommand(String &command) = 0;
+		virtual void ParseCommand(String &command) = 0;
     
     public:
         virtual void ExecuteCommand(String &command) = 0;
@@ -22,10 +21,23 @@ class CommandExecutor {
 class RelayController : public CommandExecutor {
 	private:
         const uint8_t RELAY_PIN = 22;
+        String ActionName;
+        void (RelayController::*ActionMethod)(); //Pointer on method, command should call
 
-		void SplitCommand(String &command) override {
-			
+		void ParseCommand(String &command)  override { /*Write action name in class field*/
+            this->ActionName = command.substring(0, command.indexOf(':')); /*Selecting action part of the command*/
+            command = command.substring(command.indexOf(':') + 1); 
 		}	
+
+        void SelectActionViaName() {
+            if (this->ActionName == "on") {
+                this->ActionMethod = &RelayController::turnOn;                  //parse command to select method
+            }
+
+            else if (this->ActionName == "off") {
+                this->ActionMethod = &RelayController::turnOff;
+            }
+        }
 
 	public:
         void init() {
@@ -33,13 +45,9 @@ class RelayController : public CommandExecutor {
         }
 
         void ExecuteCommand(String &command) override {
-			if (command.substring(0, command.indexOf(':')) == "on") {
-                this->turnOn();
-            }
-
-            else if (command.substring(0, command.indexOf(':')) == "off") {
-                this->turnOff();
-            }
+			this->ParseCommand(command);
+            this->SelectActionViaName();
+            (this->*ActionMethod)();  //executing method, selected in SelectActionViaName
 		}	
 
 		void turnOn() {
@@ -59,10 +67,21 @@ class RelayController : public CommandExecutor {
 class TimerClass : public CommandExecutor {
     private:
         int time = 0;
+        String ActionName;
+        void (TimerClass::*ActionMethod)(); //Pointer on method, command should call
 
-		void SplitCommand(String &command) override {
-			
+		void ParseCommand(String &command) override { /*Write action part in ActionName and time part in time*/
+            this->ActionName = command.substring(0, command.indexOf(':')); /*Selecting action part of the command*/
+            command = command.substring(command.indexOf(':') + 1);
+            this->time = command.substring(0, command.indexOf(':')).toInt(); /*Selecting time part of the command*/
+            command = command.substring(command.indexOf(':') + 1);
 		}
+        
+        void SelectActionViaName() {
+            if (this->ActionName == "settimer") {
+                this->ActionMethod = &TimerClass::setRelayOnTimer;                  //parse command to select method
+            }
+        }
 
         static void KeepingRelayOnTask(void *pvParameters) {
             TimerClass* self = (TimerClass*)pvParameters;       /*<self> is pointing on class object*/
@@ -75,14 +94,30 @@ class TimerClass : public CommandExecutor {
             vTaskDelete(NULL);      /*Delete this task*/
         }
 
+
     public:
         bool isActive = false;
 
         void ExecuteCommand(String &command) override {
-			
+            Serial.println(command);
+			this->ParseCommand(command);
+            this->SelectActionViaName();
+            (this->*ActionMethod)();  //executing method, selected in SelectActionViaName
 		}
 
-        void setRelayOnTimer(int time) {
+        void setRelayOnTimer() {  
+            xTaskCreate(
+                this->KeepingRelayOnTask,   /* Task method pointer*/
+                "Relay on keeper",          /* Task name*/
+                1000,                       /* Stack deepth*/
+                (void*) this,               /* Pointer on class object itself */
+                2,                          /* Priority*/
+                NULL                        /* Task handle*/
+            );  
+            Serial.println("Таймер запущен");
+        }
+
+        void setRelayOnTimer(int time) { 
             this->time = time;
 
             xTaskCreate(
@@ -113,8 +148,8 @@ class CommandDistributorClass : CommandExecutor{
 
         }	
 
-        void SplitCommand(String &command) override {
-			this->objName = command.substring(0, command.indexOf(':')); /*spliting first part of the command*/
+        void ParseCommand(String &command) override {
+			this->objName = command.substring(0, command.indexOf(':')); /*Parsing first part of the command*/
             command = command.substring(command.indexOf(':') + 1); 
 		}
 
@@ -122,7 +157,7 @@ class CommandDistributorClass : CommandExecutor{
 
     public:
         void ExecuteCommand(String &command) override {
-			SplitCommand(command);
+			ParseCommand(command);
             TargetObject = SelectObjViaName();
             TargetObject->ExecuteCommand(command);
 		}	
