@@ -8,7 +8,7 @@ class TimerClass : public CommandExecutor {
         String ActionName;
         void (TimerClass::*ActionMethod)(); //Pointer on method, command should call
 
-		void ParseCommand(String &command) override;
+		void ParseCommand(String* command) override;
         
         void SelectActionViaName();
 
@@ -18,7 +18,7 @@ class TimerClass : public CommandExecutor {
     public:
         bool isActive = false;
 
-        void ExecuteCommand(String &command) override;
+        void ExecuteCommand(String* command) override;
 
         void setRelayOnTimer();
 

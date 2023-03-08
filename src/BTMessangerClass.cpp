@@ -6,7 +6,9 @@ void BTMessangerClass::WaitForCommandTask(void *pvParameters) {
     BTMessangerClass* self = (BTMessangerClass*)pvParameters;
     for (;;) {
         if (self->isAvailable()) {
-            String command = self->getRequest();
+            String request = self->getRequest();
+            String* command = new String(request);
+            //delete &request;
             CommandDistributor.ExecuteCommand(command);
         }
         vTaskDelay(10);
@@ -23,7 +25,7 @@ void BTMessangerClass::startWaitingCommand() {
     xTaskCreate(
         this->WaitForCommandTask,                           /* Task method pointer*/
         "Waiter for Bluetooth command task",                /* Task name*/
-        1000,                                               /* Stack deepth*/
+        10000,                                               /* Stack deepth*/
         (void*) this,                                       /* Pointer on class object itself */
         1,                                                   /* Priority*/
         NULL                                                /* Task handle*/
@@ -32,7 +34,7 @@ void BTMessangerClass::startWaitingCommand() {
 
 String BTMessangerClass::getRequest() {
     sendResponse(ReturnCode::OK);
-    return SerialBT.readStringUntil(commandTerminateChar);
+    return SerialBT.readStringUntil(commandTerminateChar);;
 }
 
 void BTMessangerClass::sendResponse(int resp) {

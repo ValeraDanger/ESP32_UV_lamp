@@ -4,11 +4,11 @@
 #include "BTMessangerClass.h"
 #include <Arduino.h>
 
-void TimerClass::ParseCommand(String &command) { /*Write action part in ActionName and time part in time*/
-    this->ActionName = command.substring(0, command.indexOf(':')); /*Selecting action part of the command*/
-    command = command.substring(command.indexOf(':') + 1);
-    this->time = command.substring(0, command.indexOf(':')).toInt(); /*Selecting time part of the command*/
-    command = command.substring(command.indexOf(':') + 1);
+void TimerClass::ParseCommand(String* command) { /*Write action part in ActionName and time part in time*/
+    this->ActionName = command->substring(0, command->indexOf(':')); /*Selecting action part of the command*/
+    *command = command->substring(command->indexOf(':') + 1);
+    this->time = command->substring(0, command->indexOf(':')).toInt(); /*Selecting time part of the command*/
+    *command = command->substring(command->indexOf(':') + 1);
 }
 
 void TimerClass::SelectActionViaName() {
@@ -30,9 +30,10 @@ void TimerClass::KeepingRelayOnTask(void *pvParameters) {
 }
 
 
-void TimerClass::ExecuteCommand(String &command) {
-    Serial.println(command);
+void TimerClass::ExecuteCommand(String* command) {
+    Serial.println(*command);
     this->ParseCommand(command);
+    delete command;
     this->SelectActionViaName();
     (this->*ActionMethod)();  //executing method, selected in SelectActionViaName
 }
@@ -41,7 +42,7 @@ void TimerClass::setRelayOnTimer() {
     xTaskCreate(
         this->KeepingRelayOnTask,   /* Task method pointer*/
         "Relay on keeper",          /* Task name*/
-        1000,                       /* Stack deepth*/
+        10000,                       /* Stack deepth*/
         (void*) this,               /* Pointer on class object itself */
         2,                          /* Priority*/
         NULL                        /* Task handle*/
@@ -56,7 +57,7 @@ void TimerClass::setRelayOnTimer(int time) {
     xTaskCreate(
         this->KeepingRelayOnTask,   /* Task method pointer*/
         "Relay on keeper",          /* Task name*/
-        1000,                       /* Stack deepth*/
+        10000,                       /* Stack deepth*/
         (void*) this,               /* Pointer on class object itself */
         2,                          /* Priority*/
         NULL                        /* Task handle*/

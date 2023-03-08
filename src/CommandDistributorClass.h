@@ -10,11 +10,11 @@ class CommandDistributorClass : CommandExecutor{
 
         CommandExecutor* SelectObjViaName();	
 
-        void ParseCommand(String &command) override;
+        void ParseCommand(String* command) override;
         
 
     public:
-        void ExecuteCommand(String &command) override;
+        void ExecuteCommand(String* command) override;
 
 };
 

@@ -11,14 +11,14 @@ CommandExecutor* CommandDistributorClass::SelectObjViaName() {
     
 }	                                        /*TODO: throw expetion "no object" here*/
 
-void CommandDistributorClass::ParseCommand(String &command) {
-    this->objName = command.substring(0, command.indexOf(':')); /*Parsing first part of the command*/
-    command = command.substring(command.indexOf(':') + 1); 
+void CommandDistributorClass::ParseCommand(String* command) {
+    this->objName = command->substring(0, command->indexOf(':')); /*Parsing first part of the command*/
+    *command = command->substring(command->indexOf(':') + 1); 
 }
 
 
 
-void CommandDistributorClass::ExecuteCommand(String &command) {
+void CommandDistributorClass::ExecuteCommand(String* command) {
     ParseCommand(command);
     TargetObject = SelectObjViaName();
     

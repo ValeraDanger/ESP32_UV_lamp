@@ -4,9 +4,9 @@
 #include <Arduino.h>
 
 
-void RelayController::ParseCommand(String &command) { /*Write action name in class field*/
-    this->ActionName = command.substring(0, command.indexOf(':')); /*Selecting action part of the command*/
-    command = command.substring(command.indexOf(':') + 1); 
+void RelayController::ParseCommand(String* command) { /*Write action name in class field*/
+    this->ActionName = command->substring(0, command->indexOf(':')); /*Selecting action part of the command*/
+    *command = command->substring(command->indexOf(':') + 1); 
 }	
 
 void RelayController::SelectActionViaName() {
@@ -25,8 +25,9 @@ void RelayController::init() {
     pinMode(RELAY_PIN, OUTPUT);
 }
 
-void RelayController::ExecuteCommand(String &command) {
+void RelayController::ExecuteCommand(String* command) {
     this->ParseCommand(command);
+    delete command;
     this->SelectActionViaName();
     (this->*ActionMethod)();  //executing method, selected in SelectActionViaName
 }	

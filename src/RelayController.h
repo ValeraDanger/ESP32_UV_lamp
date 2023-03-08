@@ -8,14 +8,14 @@ class RelayController : public CommandExecutor{
         String ActionName;
         void (RelayController::*ActionMethod)(); //Pointer on method, command should call
 
-		void ParseCommand(String &command) override; 
+		void ParseCommand(String* command) override; 
 
         void SelectActionViaName();
 
 	public:
         void init();
 
-        void ExecuteCommand(String &command) override;
+        void ExecuteCommand(String* command) override;
 
 		void turnOn();
 

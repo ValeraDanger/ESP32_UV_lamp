@@ -98,62 +98,6 @@ void setup()
 }
 
 void loop() {
-// 	if (BTMessanger.isAvailable()) {
-// 		String incStr = BTMessanger.getRequest();
-
-// 		if (incStr == "1") {
-// 			Relay.turnOn();
-// 		}
-
-// 		if (incStr == "0") {
-// 			Relay.turnOff();
-// 		}
-
-// 		if (incStr[0] == '!') {
-// 			String BTReaded = incStr.substring(1);
-// 			Serial.println(BTReaded);
-//             Serial.println(getValue(BTReaded, ':', 0));
-// 			if (getValue(BTReaded, ':', 0) == String("setwifi"))
-// 			{
-// 				SetWifi(getValue(BTReaded, ':', 1), getValue(BTReaded, ':', 2), getValue(BTReaded, ':', 3).toInt());
-// 			}
-
-// 			if (getValue(BTReaded, ':', 0) == String("checkssid"))
-// 			{
-// 				Serial.println("Checking SSID...");
-// 				Serial.println(CheckWifiSsid());
-// 			}
-
-// 			if (getValue(BTReaded, ':', 0) == String("checkpswd"))
-// 			{
-// 				Serial.println("Checking password...");
-// 				Serial.println(CheckWifiPswd());
-// 			}
-
-// 			if (getValue(BTReaded, ':', 0) == String("checkuse_wifi"))
-// 			{
-// 				Serial.println("Checking use_wifi...");
-// 				Serial.println(CheckWifiUse_Wifi());
-// 			}
-
-// 			if (getValue(BTReaded, ':', 0) == String("checktime"))
-// 			{
-// 				if (isWIFIConnected)
-// 				{
-// 				Serial.println(timeClient.getFormattedTime());
-// 				}
-// 			}
-
-// 			if (getValue(BTReaded, ':', 0) == String("settimer"))
-// 			{
-//                 Timer.setRelayOnTimer(5);
-// 				// end_time = millis() + getValue(BTReaded, ':', 1).toInt() * 1000;
-// 				// isTimerActive = true;
-// 				// digitalWrite(RELAY, HIGH);
-// 				// Serial.println("\t On. Таймер запущен");
-// 			}
-// 		}
-
-// 		delay(20);
-//   }
+    Serial.println(ESP.getFreeHeap());
+    vTaskDelay(100);
 }
