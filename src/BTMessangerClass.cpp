@@ -39,7 +39,7 @@ String BTMessangerClass::getRequest() {
 
 void BTMessangerClass::sendResponse(int resp) {
     SerialBT.print(resp);
-    SerialBT.println("#");
+    SerialBT.print("#");
 }
 
 bool BTMessangerClass::isAvailable() {
