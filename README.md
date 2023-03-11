@@ -14,6 +14,7 @@ Where:
  `<action>` for `relay` object:
  - `on` : set relay on
  - `off` : set relay off
+ - `status` : returns relay status code
  
  `<action>` for `timer` object:
  - `settimer` : set relay on for some time
