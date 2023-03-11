@@ -17,6 +17,10 @@ void RelayController::SelectActionViaName() {
     else if (this->ActionName == "off") {
         this->ActionMethod = &RelayController::turnOff;
     }
+
+    else if (this->ActionName == "status") {
+        this->ActionMethod = &RelayController::sendStatus;
+    }
 }
 
 
@@ -35,13 +39,23 @@ void RelayController::ExecuteCommand(String* command) {
 void RelayController::turnOn() {
     digitalWrite(RELAY_PIN, HIGH);
     Serial.println("\tOn");
+    this->isOn = true;
     BTMessanger.sendResponse(BTMessanger.RELAY_ON);
 }
 
 void RelayController::turnOff() {
     digitalWrite(RELAY_PIN, LOW);
     Serial.println("\tOff");
+    this->isOn = false;
     BTMessanger.sendResponse(BTMessanger.RELAY_OFF);
+}
+
+bool RelayController::getIsOn() {
+    return this->isOn;
+}
+
+void RelayController::sendStatus() {
+    BTMessanger.sendResponse( this->getIsOn() ? BTMessanger.RELAY_ON : BTMessanger.RELAY_OFF); //sends relay_on or relay_off according relay_isOn
 }
 
 RelayController Relay;

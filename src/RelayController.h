@@ -12,6 +12,8 @@ class RelayController : public CommandExecutor{
 
         void SelectActionViaName();
 
+        bool isOn = false;
+
 	public:
         void init();
 
@@ -20,6 +22,10 @@ class RelayController : public CommandExecutor{
 		void turnOn();
 
 		void turnOff();
+
+        bool getIsOn();
+
+        void sendStatus();
 
 };
 

@@ -6,8 +6,9 @@ CommandExecutor* CommandDistributorClass::SelectObjViaName() {
     if (objName == "relay")
         return &Relay;
 
-    if (objName == "timer")
+    else if (objName == "timer")
         return &Timer;
+
     
 }	                                        /*TODO: throw expetion "no object" here*/
 
