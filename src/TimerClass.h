@@ -4,7 +4,9 @@
 
 class TimerClass : public CommandExecutor {
     private:
-        int time = 0;
+        bool isPaused = false;
+        unsigned long int start_time;
+        int time_left;
         String ActionName;
         void (TimerClass::*ActionMethod)(); //Pointer on method, command should call
 
@@ -23,6 +25,10 @@ class TimerClass : public CommandExecutor {
         void setRelayOnTimer();
 
         void setRelayOnTimer(int time);
+
+        void pause();
+
+        void start();
 };
 
 extern TimerClass Timer;
