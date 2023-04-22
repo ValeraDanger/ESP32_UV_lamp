@@ -91,10 +91,12 @@ void TimerClass::pause() {
     this->time_left -= (millis() - this->start_time);
     this->start_time = millis();
     this->isPaused = true;
+    BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
 }
 
 void TimerClass::start(){
     this->isPaused = false;
+    BTMessanger.sendResponse(BTMessanger.TIMER_ON);
 }
 
 TimerClass Timer;

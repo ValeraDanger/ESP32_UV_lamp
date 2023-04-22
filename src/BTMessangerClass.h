@@ -22,6 +22,7 @@ class BTMessangerClass {
             RELAY_OFF,
             TIMER_ON,
             TIMER_OFF,
+            TIMER_PAUSED,
         } ReturnCode;
 
 		void init();
