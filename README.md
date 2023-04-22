@@ -18,6 +18,8 @@ Where:
  
  `<action>` for `timer` object:
  - `settimer` : set relay on for some time
+ - `pause` : pause timer until start
+ - `start` : start paused timer
 
 -`<other>` : other arguments for diffrent object.
  
