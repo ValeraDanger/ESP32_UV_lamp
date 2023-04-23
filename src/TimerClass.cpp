@@ -8,7 +8,7 @@ void TimerClass::ParseCommand(String* command) { /*Write action part in ActionNa
     this->ActionName = command->substring(0, command->indexOf(':')); /*Selecting action part of the command*/
     *command = command->substring(command->indexOf(':') + 1);
     if (this->ActionName == "settimer") {
-        this->time_left = command->substring(0, command->indexOf(':')).toInt() * 1000; /*Selecting time part of the command*/
+        this->init_time = command->substring(0, command->indexOf(':')).toInt() * 1000; /*Selecting time part of the command*/
         *command = command->substring(command->indexOf(':') + 1);
     }
 }
@@ -22,10 +22,14 @@ void TimerClass::SelectActionViaName() {
         this->ActionMethod = &TimerClass::pause; 
     }
 
-    else if (this->ActionName == "start") {
-        this->ActionMethod = &TimerClass::start; 
+    else if (this->ActionName == "resume") {
+        this->ActionMethod = &TimerClass::resume; 
     }
     
+    else if (this->ActionName == "gettime") {
+        this->ActionMethod = &TimerClass::send_time_left; 
+    }
+
 }
 
 void TimerClass::KeepingRelayOnTask(void *pvParameters) {
@@ -33,11 +37,11 @@ void TimerClass::KeepingRelayOnTask(void *pvParameters) {
     Relay.turnOn();
     self->isActive = true;
     self->start_time = millis();
-    Serial.println(self->time_left);
-    
-    while (millis() < (self->start_time + self->time_left)) {
-        if (self->isPaused) {
-            self->start_time = millis(); 
+    Serial.println(self->init_time);
+    self->time_left = self->init_time;
+    while (self->time_left >= 0) {
+        if (!self->isPaused) {
+            self->time_left = self->init_time - (millis() - self->start_time);
         }
         vTaskDelay(5);
     }
@@ -73,7 +77,7 @@ void TimerClass::setRelayOnTimer() {
 }
 
 void TimerClass::setRelayOnTimer(int time) { 
-    this->time_left = time * 1000;
+    this->init_time = time * 1000;
 
     xTaskCreate(
         this->KeepingRelayOnTask,   /* Task method pointer*/
@@ -88,15 +92,23 @@ void TimerClass::setRelayOnTimer(int time) {
 }
 
 void TimerClass::pause() {
-    this->time_left -= (millis() - this->start_time);
-    this->start_time = millis();
     this->isPaused = true;
+    this->init_time = this->time_left;
     BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
 }
 
-void TimerClass::start(){
+void TimerClass::resume(){
+    this->start_time = millis();
     this->isPaused = false;
     BTMessanger.sendResponse(BTMessanger.TIMER_ON);
+}
+
+int TimerClass::get_time_left() {
+    return this->time_left;
+}
+
+void TimerClass::send_time_left() {
+    BTMessanger.sendResponse(this->get_time_left());
 }
 
 TimerClass Timer;
