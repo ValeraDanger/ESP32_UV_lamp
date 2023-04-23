@@ -4,6 +4,7 @@
 #include "BTMessangerClass.h"
 #include <Arduino.h>
 
+
 void TimerClass::ParseCommand(String* command) { /*Write action part in ActionName and time part in time*/
     this->ActionName = command->substring(0, command->indexOf(':')); /*Selecting action part of the command*/
     *command = command->substring(command->indexOf(':') + 1);
@@ -15,39 +16,29 @@ void TimerClass::ParseCommand(String* command) { /*Write action part in ActionNa
 
 void TimerClass::SelectActionViaName() {
     if (this->ActionName == "settimer") {
-        this->ActionMethod = &TimerClass::setRelayOnTimer;                  //parse command to select method
+        this->ActionMethod = &TimerClass::start;                  //parse command to select method
     }
 
     else if (this->ActionName == "pause") {
         this->ActionMethod = &TimerClass::pause; 
     }
 
-    else if (this->ActionName == "start") {
-        this->ActionMethod = &TimerClass::start; 
+    else if (this->ActionName == "resume") {
+        this->ActionMethod = &TimerClass::resume; 
     }
     
 }
 
-void TimerClass::KeepingRelayOnTask(void *pvParameters) {
+void TimerClass::TimerTicker(void *pvParameters) {
     TimerClass* self = (TimerClass*)pvParameters;       /*<self> is pointing on class object*/
-    Relay.turnOn();
-    self->isActive = true;
-    self->start_time = millis();
-    Serial.println(self->time_left);
-    
-    while (millis() < (self->start_time + self->time_left)) {
-        if (self->isPaused) {
-            self->start_time = millis(); 
+
+    for(;;) {
+        if(self->tmr.tick()) {
+            self->stop();
         }
+        //Serial.println(self->tmr.tick());
         vTaskDelay(5);
     }
-    //Serial.println(self->time_left);
-    //vTaskDelay(self->time * 1000 / portTICK_RATE_MS);
-    Relay.turnOff();
-    self->isActive = false;
-    Serial.println("Таймер остановлен");
-    BTMessanger.sendResponse(BTMessanger.TIMER_OFF);
-    vTaskDelete(NULL);      /*Delete this task*/
 }
 
 
@@ -59,44 +50,50 @@ void TimerClass::ExecuteCommand(String* command) {
     (this->*ActionMethod)();  //executing method, selected in SelectActionViaName
 }
 
-void TimerClass::setRelayOnTimer() {  
+void TimerClass::start() {  
+    Relay.turnOn();
+    this->isActive = true;
+    this->tmr.setTime(this->time_left);
+    Serial.println(this->time_left);
+    this->tmr.start(); 
+    Serial.println("Таймер запщуен");
+
     xTaskCreate(
-        this->KeepingRelayOnTask,   /* Task method pointer*/
-        "Relay on keeper",          /* Task name*/
+        this->TimerTicker,   /* Task method pointer*/
+        "Timer ticker",          /* Task name*/
         10000,                       /* Stack deepth*/
         (void*) this,               /* Pointer on class object itself */
         2,                          /* Priority*/
-        NULL                        /* Task handle*/
+        &this->TimerTickerHandle                        /* Task handle*/
     );  
-    Serial.println("Таймер запущен");
-    BTMessanger.sendResponse(BTMessanger.TIMER_ON);
+
 }
 
-void TimerClass::setRelayOnTimer(int time) { 
+void TimerClass::start(int time) { 
     this->time_left = time * 1000;
-
-    xTaskCreate(
-        this->KeepingRelayOnTask,   /* Task method pointer*/
-        "Relay on keeper",          /* Task name*/
-        10000,                       /* Stack deepth*/
-        (void*) this,               /* Pointer on class object itself */
-        2,                          /* Priority*/
-        NULL                        /* Task handle*/
-    );  
-    Serial.println("Таймер запущен");
-    BTMessanger.sendResponse(BTMessanger.TIMER_ON);
+    this->start();  
 }
 
 void TimerClass::pause() {
-    this->time_left -= (millis() - this->start_time);
-    this->start_time = millis();
+    this->tmr.stop();
     this->isPaused = true;
+    Serial.println("Таймер приостановлен");
     BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
 }
 
-void TimerClass::start(){
+void TimerClass::resume(){
     this->isPaused = false;
+    this->tmr.resume();
+    Serial.println("Таймер запущен после паузы");
     BTMessanger.sendResponse(BTMessanger.TIMER_ON);
+}
+
+void TimerClass::stop() {
+    vTaskDelete(this->TimerTickerHandle);      /*Delete TimerTicker task*/
+    Relay.turnOff();
+    this->tmr.stop();
+    Serial.println("Таймер остановлен");
+    BTMessanger.sendResponse(BTMessanger.TIMER_OFF);
 }
 
 TimerClass Timer;
