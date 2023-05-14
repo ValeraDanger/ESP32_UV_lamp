@@ -14,6 +14,10 @@ class RelayController : public CommandExecutor{
 
         bool isOn = false;
 
+        //bool isHeated = false;
+
+        //bool isHeating = false;
+
 	public:
         void init();
 
@@ -26,6 +30,8 @@ class RelayController : public CommandExecutor{
         bool getIsOn();
 
         void sendStatus();
+
+        //void startHeating();
 
 };
 
