@@ -30,6 +30,10 @@ void TimerClass::SelectActionViaName() {
         this->ActionMethod = &TimerClass::send_time_left; 
     }
 
+    else if (this->ActionName == "status") {
+        this->ActionMethod = &TimerClass::sendStatus; 
+    }
+
 }
 
 void TimerClass::KeepingRelayOnTask(void *pvParameters) {
@@ -98,8 +102,10 @@ void TimerClass::pause() {
 }
 
 void TimerClass::resume(){
-    this->start_time = millis();
-    this->isPaused = false;
+    if (this->isPaused) {
+        this->start_time = millis();
+        this->isPaused = false;
+    }
     BTMessanger.sendResponse(BTMessanger.TIMER_ON);
 }
 
@@ -109,6 +115,13 @@ int TimerClass::get_time_left() {
 
 void TimerClass::send_time_left() {
     BTMessanger.sendResponse(this->get_time_left());
+}
+
+void TimerClass::sendStatus() {
+    BTMessanger.sendResponse(this->isActive ? BTMessanger.TIMER_ON : BTMessanger.TIMER_OFF); //sends timer_on or timer_off according timer_isActive
+    if (this->isPaused) {
+        BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
+    }
 }
 
 TimerClass Timer;

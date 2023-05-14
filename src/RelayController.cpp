@@ -1,8 +1,10 @@
 #include "RelayController.h"
+#include "TimerClass.h"
 #include "CommandExecutor.h"
 #include "BTMessangerClass.h"
 #include <Arduino.h>
 
+#define HEATING_TIME 60000
 
 void RelayController::ParseCommand(String* command) { /*Write action name in class field*/
     this->ActionName = command->substring(0, command->indexOf(':')); /*Selecting action part of the command*/
@@ -21,6 +23,10 @@ void RelayController::SelectActionViaName() {
     else if (this->ActionName == "status") {
         this->ActionMethod = &RelayController::sendStatus;
     }
+
+    // else if (this->ActionName == "heat") {
+    //     this->ActionMethod = &RelayController::startHeating;
+    // }
 }
 
 
@@ -57,5 +63,10 @@ bool RelayController::getIsOn() {
 void RelayController::sendStatus() {
     BTMessanger.sendResponse( this->getIsOn() ? BTMessanger.RELAY_ON : BTMessanger.RELAY_OFF); //sends relay_on or relay_off according relay_isOn
 }
+
+// void RelayController::startHeating() {
+//     Timer.setRelayOnTimer(HEATING_TIME);
+//     this->isHeating = true;
+// }
 
 RelayController Relay;
