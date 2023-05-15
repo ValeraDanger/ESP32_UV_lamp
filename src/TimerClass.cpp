@@ -26,6 +26,14 @@ void TimerClass::SelectActionViaName() {
     else if (this->ActionName == "resume") {
         this->ActionMethod = &TimerClass::resume; 
     }
+
+    else if (this->ActionName == "gettime") {
+        this->ActionMethod = &TimerClass::send_time_left; 
+    }
+
+    else if (this->ActionName == "status") {
+        this->ActionMethod = &TimerClass::sendStatus; 
+    }
     
 }
 
@@ -34,9 +42,10 @@ void TimerClass::TimerTicker(void *pvParameters) {
 
     for(;;) {
         if(self->tmr.tick()) {
-            self->stop();
+            self->stop();  
+            vTaskDelete(NULL); 
         }
-        //Serial.println(self->tmr.tick());
+        //Serial.println(self->tmr.timeLeft());
         vTaskDelay(5);
     }
 }
@@ -53,6 +62,7 @@ void TimerClass::ExecuteCommand(String* command) {
 void TimerClass::start() {  
     Relay.turnOn();
     this->isActive = true;
+    this->tmr.force();
     this->tmr.setTime(this->time_left);
     Serial.println(this->time_left);
     this->tmr.start(); 
@@ -89,11 +99,24 @@ void TimerClass::resume(){
 }
 
 void TimerClass::stop() {
-    vTaskDelete(this->TimerTickerHandle);      /*Delete TimerTicker task*/
     Relay.turnOff();
+    this->tmr.force();
     this->tmr.stop();
     Serial.println("Таймер остановлен");
     BTMessanger.sendResponse(BTMessanger.TIMER_OFF);
+    vTaskDelete(this->TimerTickerHandle);      /*Delete TimerTicker task*/
+}
+
+
+void TimerClass::send_time_left() {
+    BTMessanger.sendResponse(this->tmr.timeLeft());
+}
+
+void TimerClass::sendStatus() {
+    BTMessanger.sendResponse(this->tmr.active() ? BTMessanger.TIMER_ON : BTMessanger.TIMER_OFF); //sends timer_on or timer_off according timer_isActive
+    if (this->isPaused) {
+        BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
+    }
 }
 
 TimerClass Timer;

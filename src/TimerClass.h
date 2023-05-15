@@ -36,6 +36,10 @@ class TimerClass : public CommandExecutor {
         void resume();
 
         void stop();
+
+        void send_time_left();
+
+        void sendStatus();
 };
 
 extern TimerClass Timer;
