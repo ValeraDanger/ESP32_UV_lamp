@@ -113,10 +113,11 @@ void TimerClass::send_time_left() {
 }
 
 void TimerClass::sendStatus() {
-    BTMessanger.sendResponse(this->tmr.active() ? BTMessanger.TIMER_ON : BTMessanger.TIMER_OFF); //sends timer_on or timer_off according timer_isActive
     if (this->isPaused) {
         BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
+        return;
     }
+    BTMessanger.sendResponse(this->tmr.active() ? BTMessanger.TIMER_ON : BTMessanger.TIMER_OFF); //sends timer_on or timer_off according timer_isActive
 }
 
 TimerClass Timer;
