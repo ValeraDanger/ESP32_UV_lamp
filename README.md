@@ -20,7 +20,7 @@ Where:
  - `settimer` : set relay on for some time
  - `pause` : pause timer until start
  - `start` : start paused timer
- - `status` : returns timer status (3 or 4, and 5 if paused)
+ - `status` : returns timer status (3 - started, 4 - stopped, 5 - paused)
  - `gettime` : returns timer time left in ms
 
 -`<other>` : other arguments for diffrent object.
