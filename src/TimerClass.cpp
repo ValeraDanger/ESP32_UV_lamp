@@ -67,7 +67,7 @@ void TimerClass::start() {
     Serial.println(this->time_left);
     this->tmr.start(); 
     Serial.println("Таймер запщуен");
-
+    BTMessanger.sendResponse(BTMessanger.TIMER_ON);
     xTaskCreate(
         this->TimerTicker,   /* Task method pointer*/
         "Timer ticker",          /* Task name*/
