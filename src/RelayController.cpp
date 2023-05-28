@@ -1,4 +1,5 @@
 #include "RelayController.h"
+#include "TimerClass.h"
 #include "CommandExecutor.h"
 #include "BTMessangerClass.h"
 #include <Arduino.h>
@@ -44,10 +45,16 @@ void RelayController::turnOn() {
 }
 
 void RelayController::turnOff() {
-    digitalWrite(RELAY_PIN, LOW);
-    Serial.println("\tOff");
-    this->isOn = false;
-    BTMessanger.sendResponse(BTMessanger.RELAY_OFF);
+    if(!Timer.tmr.active()) {
+        digitalWrite(RELAY_PIN, LOW);
+        Serial.println("\tOff");
+        this->isOn = false;
+        BTMessanger.sendResponse(BTMessanger.RELAY_OFF);
+    }
+    
+    else {
+        Timer.stop();
+    }
 }
 
 bool RelayController::getIsOn() {

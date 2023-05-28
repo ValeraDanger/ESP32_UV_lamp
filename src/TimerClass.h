@@ -10,7 +10,7 @@ class TimerClass : public CommandExecutor {
         unsigned long int start_time;
         int time_left;
         String ActionName;
-        TimerMs tmr = TimerMs(0, 0, 1);    /*(period, ms), (0 not started / 1 started), (mode: 0 period / 1 timer)*/
+        
 
         void (TimerClass::*ActionMethod)(); //Pointer on method, command should call
 
@@ -24,6 +24,8 @@ class TimerClass : public CommandExecutor {
 
     public:
         bool isActive = false;
+
+        TimerMs tmr = TimerMs(0, 0, 1);    /*(period, ms), (0 not started / 1 started), (mode: 0 period / 1 timer)*/
 
         void ExecuteCommand(String* command) override;
 

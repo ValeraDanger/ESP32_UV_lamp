@@ -99,11 +99,11 @@ void TimerClass::resume(){
 }
 
 void TimerClass::stop() {
-    Relay.turnOff();
     this->tmr.force();
     this->tmr.stop();
     Serial.println("Таймер остановлен");
     BTMessanger.sendResponse(BTMessanger.TIMER_OFF);
+    Relay.turnOff();
     vTaskDelete(this->TimerTickerHandle);      /*Delete TimerTicker task*/
 }
 
