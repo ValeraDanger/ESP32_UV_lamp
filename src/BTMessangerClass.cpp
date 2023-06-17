@@ -42,6 +42,11 @@ void BTMessangerClass::sendResponse(int resp) {
     SerialBT.print("#");
 }
 
+void BTMessangerClass::sendStr(String str) {
+    SerialBT.print(str);
+    SerialBT.print("#");
+}
+
 bool BTMessangerClass::isAvailable() {
     return SerialBT.available();
 }

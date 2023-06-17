@@ -35,6 +35,8 @@ class BTMessangerClass {
 
 		void sendResponse(int resp);
 
+        void sendStr(String str);
+
 		bool isAvailable();
 
 };
