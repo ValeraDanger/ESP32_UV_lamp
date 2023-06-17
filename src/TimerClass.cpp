@@ -44,6 +44,10 @@ void TimerClass::SelectActionViaName() {
     else if (this->ActionName == "preheat") {
         this->ActionMethod = &TimerClass::start_preheat; 
     }
+
+    else if (this->ActionName == "preheatstop") {
+        this->ActionMethod = &TimerClass::stop_preheating; 
+    }
     
 }
 
@@ -53,7 +57,7 @@ void TimerClass::TimerTicker(void *pvParameters) {
     for(;;) {
         if(self->tmr.tick()) {
             self->stop();  
-            vTaskDelete(NULL); 
+            vTaskDelete(self->TimerTickerHandle); 
         }
         //Serial.println(self->tmr.timeLeft());
         vTaskDelay(5);
@@ -64,12 +68,8 @@ void TimerClass::PreheaterTicker(void *pvParameters) {
     TimerClass* self = (TimerClass*)pvParameters;       /*<self> is pointing on class object*/
 
     for(;;) {
-        if(self->tmr.tick() || !self->isPreheating) {
-            self->tmr.force();
-            self->tmr.stop();
-            Serial.println("Преднагрев остановлен");
-            self->isPreheating = false;
-            BTMessanger.sendResponse(BTMessanger.PREHEAT_OFF);
+        if(self->tmr.tick()) {
+            self->stop_preheating();
             vTaskDelete(self->PreheaterTickerHandle); 
         }
         //Serial.println(self->tmr.timeLeft());
@@ -87,7 +87,7 @@ void TimerClass::ExecuteCommand(String* command) {
 }
 
 void TimerClass::start() {  
-    this->isPreheating = false;
+    //this->isPreheating = false;
     vTaskDelay(10);
     this->isActive = true;
     this->tmr.stop();
@@ -154,14 +154,27 @@ void TimerClass::resume(){
 }
 
 void TimerClass::stop() {
-    this->tmr.force();
+    //this->isPreheating = false;
     this->tmr.stop();
+    this->tmr.force();
+    this->tmr.setTime(0);
     Serial.println("Таймер остановлен");
+    this->isActive = false;
     BTMessanger.sendResponse(BTMessanger.TIMER_OFF);
     Relay.turnOff();
     vTaskDelete(this->TimerTickerHandle);      /*Delete TimerTicker task*/
+
 }
 
+void TimerClass::stop_preheating() {
+    this->tmr.stop();
+    this->tmr.force();
+    this->tmr.setTime(0);
+    Serial.println("Преднагрев остановлен");
+    this->isPreheating = false;
+    BTMessanger.sendResponse(BTMessanger.PREHEAT_OFF);
+    vTaskDelete(this->PreheaterTickerHandle); 
+}
 
 void TimerClass::send_time_left() {
     BTMessanger.sendResponse(this->tmr.timeLeft());

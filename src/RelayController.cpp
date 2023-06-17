@@ -42,22 +42,14 @@ void RelayController::turnOn() {
     Serial.println("\tOn");
     this->isOn = true;
     BTMessanger.sendResponse(BTMessanger.RELAY_ON);
-    Timer.isPreheating = false;
+    //Timer.isPreheating = false;
 }
 
 void RelayController::turnOff() {
-    if(!Timer.tmr.active()) {
-        digitalWrite(RELAY_PIN, LOW);
-        Serial.println("\tOff");
-        this->isOn = false;
-        BTMessanger.sendResponse(BTMessanger.RELAY_OFF);
-    }
-    
-    else {
-        Timer.stop();
-    }
-
-    Timer.isPreheating = false;
+    digitalWrite(RELAY_PIN, LOW);
+    Serial.println("\tOff");
+    this->isOn = false;
+    BTMessanger.sendResponse(BTMessanger.RELAY_OFF);
 }
 
 bool RelayController::getIsOn() {

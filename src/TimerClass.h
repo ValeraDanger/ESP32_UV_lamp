@@ -45,6 +45,8 @@ class TimerClass : public CommandExecutor {
 
         void stop();
 
+        void stop_preheating();
+
         void send_time_left();
 
         void send_preheat_time_left();
