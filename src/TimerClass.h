@@ -21,9 +21,13 @@ class TimerClass : public CommandExecutor {
         TaskHandle_t TimerTickerHandle;
         static void TimerTicker(void* pvParameters);
 
+        TaskHandle_t PreheaterTickerHandle;
+        static void PreheaterTicker(void* pvParameters);
+
 
     public:
         bool isActive = false;
+        bool isPreheating = false;
 
         TimerMs tmr = TimerMs(0, 0, 1);    /*(period, ms), (0 not started / 1 started), (mode: 0 period / 1 timer)*/
 
@@ -33,6 +37,8 @@ class TimerClass : public CommandExecutor {
 
         void start(int time);
 
+        void start_preheat();
+
         void pause();
 
         void resume();
@@ -40,6 +46,8 @@ class TimerClass : public CommandExecutor {
         void stop();
 
         void send_time_left();
+
+        void send_preheat_time_left();
 
         void sendStatus();
 };

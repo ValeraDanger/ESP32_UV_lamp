@@ -4,6 +4,8 @@
 #include "BTMessangerClass.h"
 #include <Arduino.h>
 
+#define PREHEAT_TIME 60000
+
 
 void TimerClass::ParseCommand(String* command) { /*Write action part in ActionName and time part in time*/
     this->ActionName = command->substring(0, command->indexOf(':')); /*Selecting action part of the command*/
@@ -31,8 +33,16 @@ void TimerClass::SelectActionViaName() {
         this->ActionMethod = &TimerClass::send_time_left; 
     }
 
+    else if (this->ActionName == "getpreheattime") {
+        this->ActionMethod = &TimerClass::send_preheat_time_left; 
+    }
+
     else if (this->ActionName == "status") {
         this->ActionMethod = &TimerClass::sendStatus; 
+    }
+
+    else if (this->ActionName == "preheat") {
+        this->ActionMethod = &TimerClass::start_preheat; 
     }
     
 }
@@ -50,6 +60,23 @@ void TimerClass::TimerTicker(void *pvParameters) {
     }
 }
 
+void TimerClass::PreheaterTicker(void *pvParameters) {
+    TimerClass* self = (TimerClass*)pvParameters;       /*<self> is pointing on class object*/
+
+    for(;;) {
+        if(self->tmr.tick() || !self->isPreheating) {
+            self->tmr.force();
+            self->tmr.stop();
+            Serial.println("Преднагрев остановлен");
+            self->isPreheating = false;
+            BTMessanger.sendResponse(BTMessanger.PREHEAT_OFF);
+            vTaskDelete(self->PreheaterTickerHandle); 
+        }
+        //Serial.println(self->tmr.timeLeft());
+        vTaskDelay(5);
+    }
+}
+
 
 void TimerClass::ExecuteCommand(String* command) {
     Serial.println(*command);
@@ -60,12 +87,17 @@ void TimerClass::ExecuteCommand(String* command) {
 }
 
 void TimerClass::start() {  
-    Relay.turnOn();
+    this->isPreheating = false;
+    vTaskDelay(10);
     this->isActive = true;
+    this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(this->time_left);
-    Serial.println(this->time_left);
     this->tmr.start(); 
+    Serial.println(this->time_left);
+    this->send_time_left();
+    Relay.turnOn();
+    
     Serial.println("Таймер запщуен");
     BTMessanger.sendResponse(BTMessanger.TIMER_ON);
     xTaskCreate(
@@ -79,6 +111,27 @@ void TimerClass::start() {
 
 }
 
+void TimerClass::start_preheat() {  
+    this->isPreheating = true;
+    this->tmr.stop();
+    this->tmr.force();
+    this->tmr.setTime(PREHEAT_TIME);
+    this->tmr.start(); 
+    this->send_preheat_time_left();
+    Relay.turnOn();
+    Serial.println("Преднагрев запщуен");
+    BTMessanger.sendResponse(BTMessanger.PREHEAT_ON);
+    xTaskCreate(
+        this->PreheaterTicker,   /* Task method pointer*/
+        "Preheat ticker",          /* Task name*/
+        10000,                       /* Stack deepth*/
+        (void*) this,               /* Pointer on class object itself */
+        2,                          /* Priority*/
+        &this->PreheaterTickerHandle                        /* Task handle*/
+    );  
+
+}
+
 void TimerClass::start(int time) { 
     this->time_left = time * 1000;
     this->start();  
@@ -87,12 +140,14 @@ void TimerClass::start(int time) {
 void TimerClass::pause() {
     this->tmr.stop();
     this->isPaused = true;
+    this->send_time_left();
     Serial.println("Таймер приостановлен");
     BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
 }
 
 void TimerClass::resume(){
     this->isPaused = false;
+    this->send_time_left();
     this->tmr.resume();
     Serial.println("Таймер запущен после паузы");
     BTMessanger.sendResponse(BTMessanger.TIMER_ON);
@@ -112,12 +167,20 @@ void TimerClass::send_time_left() {
     BTMessanger.sendResponse(this->tmr.timeLeft());
 }
 
+void TimerClass::send_preheat_time_left() {
+    if (this->isPreheating) {
+        BTMessanger.sendResponse(this->tmr.timeLeft());
+    }
+}
+
 void TimerClass::sendStatus() {
+    BTMessanger.sendResponse(this->isPreheating ? BTMessanger.PREHEAT_ON : BTMessanger.PREHEAT_OFF);
     if (this->isPaused) {
         BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
         return;
     }
     BTMessanger.sendResponse(this->tmr.active() ? BTMessanger.TIMER_ON : BTMessanger.TIMER_OFF); //sends timer_on or timer_off according timer_isActive
+    
 }
 
 TimerClass Timer;

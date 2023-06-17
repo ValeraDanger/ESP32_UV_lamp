@@ -42,6 +42,7 @@ void RelayController::turnOn() {
     Serial.println("\tOn");
     this->isOn = true;
     BTMessanger.sendResponse(BTMessanger.RELAY_ON);
+    Timer.isPreheating = false;
 }
 
 void RelayController::turnOff() {
@@ -55,6 +56,8 @@ void RelayController::turnOff() {
     else {
         Timer.stop();
     }
+
+    Timer.isPreheating = false;
 }
 
 bool RelayController::getIsOn() {

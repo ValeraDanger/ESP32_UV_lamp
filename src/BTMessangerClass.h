@@ -23,6 +23,8 @@ class BTMessangerClass {
             TIMER_ON,
             TIMER_OFF,
             TIMER_PAUSED,
+            PREHEAT_ON,
+            PREHEAT_OFF
         } ReturnCode;
 
 		void init();
