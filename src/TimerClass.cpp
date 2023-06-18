@@ -21,6 +21,10 @@ void TimerClass::SelectActionViaName() {
         this->ActionMethod = &TimerClass::start;                  //parse command to select method
     }
 
+    else if (this->ActionName == "stop") {
+        this->ActionMethod = &TimerClass::stop; 
+    }
+
     else if (this->ActionName == "pause") {
         this->ActionMethod = &TimerClass::pause; 
     }
@@ -86,7 +90,7 @@ void TimerClass::ExecuteCommand(String* command) {
     (this->*ActionMethod)();  //executing method, selected in SelectActionViaName
 }
 
-void TimerClass::start() {  
+void TimerClass::start() {   
     this->isActive = true;
     this->tmr.stop();
     this->tmr.force();
@@ -160,7 +164,9 @@ void TimerClass::resume(){
 }
 
 void TimerClass::stop() {
-    //this->isPreheating = false;
+    if (this->tmr.timeLeft() == 0) {
+        return;
+    }
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
@@ -173,6 +179,9 @@ void TimerClass::stop() {
 }
 
 void TimerClass::stop_preheating() {
+    if (this->tmr.timeLeft() == 0) {
+        return;
+    }
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
