@@ -87,8 +87,6 @@ void TimerClass::ExecuteCommand(String* command) {
 }
 
 void TimerClass::start() {  
-    //this->isPreheating = false;
-    vTaskDelay(10);
     this->isActive = true;
     this->tmr.stop();
     this->tmr.force();
@@ -138,6 +136,10 @@ void TimerClass::start(int time) {
 }
 
 void TimerClass::pause() {
+    if (this->tmr.timeLeft() == 0) {
+        BTMessanger.sendResponse(BTMessanger.TIMER_OFF);
+        return;
+    }
     this->tmr.stop();
     this->isPaused = true;
     this->send_time_left();
@@ -146,6 +148,10 @@ void TimerClass::pause() {
 }
 
 void TimerClass::resume(){
+    if (this->tmr.timeLeft() == 0) {
+        BTMessanger.sendResponse(BTMessanger.TIMER_OFF);
+        return;
+    }
     this->isPaused = false;
     this->send_time_left();
     this->tmr.resume();
