@@ -197,7 +197,7 @@ void TimerClass::send_time_left() {
 
 void TimerClass::send_preheat_time_left() {
     if (this->isPreheating) {
-        BTMessanger.sendStr("time:" + String(this->tmr.timeLeft()));
+        BTMessanger.sendStr("preheat:" + String(this->tmr.timeLeft()));
     }
 }
 
