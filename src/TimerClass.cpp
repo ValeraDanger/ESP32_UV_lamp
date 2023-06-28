@@ -90,7 +90,8 @@ void TimerClass::ExecuteCommand(String* command) {
     (this->*ActionMethod)();  //executing method, selected in SelectActionViaName
 }
 
-void TimerClass::start() {   
+void TimerClass::start() {  
+    this->isPaused = false; 
     this->isActive = true;
     this->tmr.stop();
     this->tmr.force();
@@ -113,7 +114,8 @@ void TimerClass::start() {
 
 }
 
-void TimerClass::start_preheat() {  
+void TimerClass::start_preheat() { 
+    this->isPaused = false;  
     this->isPreheating = true;
     this->tmr.stop();
     this->tmr.force();
@@ -167,6 +169,7 @@ void TimerClass::stop() {
     if (!this->isActive) {
         return;
     }
+    this->isPaused = false; 
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
@@ -182,6 +185,7 @@ void TimerClass::stop_preheating() {
     if (!this->isPreheating) {
         return;
     }
+    this->isPaused = false; 
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
