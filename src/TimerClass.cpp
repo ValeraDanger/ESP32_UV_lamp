@@ -164,9 +164,9 @@ void TimerClass::resume(){
 }
 
 void TimerClass::stop() {
-    // if (this->tmr.timeLeft() == 0) {
-    //     return;
-    // }
+    if (!this->isActive) {
+        return;
+    }
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
@@ -179,9 +179,9 @@ void TimerClass::stop() {
 }
 
 void TimerClass::stop_preheating() {
-    // if (this->tmr.timeLeft() == 0) {
-    //     return;
-    // }
+    if (!this->isPreheating) {
+        return;
+    }
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
