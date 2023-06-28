@@ -17,7 +17,7 @@ void BTMessangerClass::WaitForCommandTask(void *pvParameters) {
 
 
 void BTMessangerClass::init() {
-    SerialBT.begin("Солнышко ОУФК-01М");
+    SerialBT.begin("Солнышко ОУФБ-04М");
     Serial.println("The device started, now you can pair it with bluetooth!");
 }
 

@@ -61,7 +61,7 @@ void TimerClass::TimerTicker(void *pvParameters) {
     for(;;) {
         if(self->tmr.tick()) {
             self->stop();  
-            vTaskDelete(self->TimerTickerHandle); 
+            //vTaskDelete(self->TimerTickerHandle); 
         }
         //Serial.println(self->tmr.timeLeft());
         vTaskDelay(5);
@@ -74,7 +74,7 @@ void TimerClass::PreheaterTicker(void *pvParameters) {
     for(;;) {
         if(self->tmr.tick()) {
             self->stop_preheating();
-            vTaskDelete(self->PreheaterTickerHandle); 
+            //vTaskDelete(self->PreheaterTickerHandle); 
         }
         //Serial.println(self->tmr.timeLeft());
         vTaskDelay(5);
@@ -164,9 +164,9 @@ void TimerClass::resume(){
 }
 
 void TimerClass::stop() {
-    if (this->tmr.timeLeft() == 0) {
-        return;
-    }
+    // if (this->tmr.timeLeft() == 0) {
+    //     return;
+    // }
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
@@ -179,9 +179,9 @@ void TimerClass::stop() {
 }
 
 void TimerClass::stop_preheating() {
-    if (this->tmr.timeLeft() == 0) {
-        return;
-    }
+    // if (this->tmr.timeLeft() == 0) {
+    //     return;
+    // }
     this->tmr.stop();
     this->tmr.force();
     this->tmr.setTime(0);
@@ -192,7 +192,9 @@ void TimerClass::stop_preheating() {
 }
 
 void TimerClass::send_time_left() {
-    BTMessanger.sendStr("time:" + String(this->tmr.timeLeft()));
+    if (this->isActive) {
+        BTMessanger.sendStr("time:" + String(this->tmr.timeLeft()));
+    }
 }
 
 void TimerClass::send_preheat_time_left() {
@@ -203,12 +205,11 @@ void TimerClass::send_preheat_time_left() {
 
 void TimerClass::sendStatus() {
     BTMessanger.sendResponse(this->isPreheating ? BTMessanger.PREHEAT_ON : BTMessanger.PREHEAT_OFF);
+    BTMessanger.sendResponse(this->isActive ? BTMessanger.TIMER_ON : BTMessanger.TIMER_OFF); //sends timer_on or timer_off according timer_isActive
     if (this->isPaused) {
         BTMessanger.sendResponse(BTMessanger.TIMER_PAUSED);
         return;
-    }
-    BTMessanger.sendResponse(this->tmr.active() ? BTMessanger.TIMER_ON : BTMessanger.TIMER_OFF); //sends timer_on or timer_off according timer_isActive
-    
+    }  
 }
 
 TimerClass Timer;
