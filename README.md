@@ -17,12 +17,12 @@ Where:
  - `status` : returns relay status code
  
  `<action>` for `timer` object:
- - `settimer` : set relay on for some time
+ - `settimer` : set relay on for some time (NEEDS TIME SPECIFIED, see example)
  - `pause` : pause timer until start
  - `start` : start paused timer
  - `status` : returns timer status (3 - started, 4 - stopped, 5 - paused)
  - `gettime` : returns timer time left in ms
- - `preheat` : starts preheating
+ - `preheat` : starts preheating (DOES NOT NEED TIME SPECIFIED)
  - `getpreheattime` : returns preheat time left in ms
  - `preheatstop` : stops preheating
 
@@ -40,3 +40,5 @@ Command examples:
     relay:on#
     relay:off#
     timer:settimer:5#
+    timer:preheat#
+    timer:start#
