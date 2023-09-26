@@ -22,6 +22,9 @@ Where:
  - `start` : start paused timer
  - `status` : returns timer status (3 - started, 4 - stopped, 5 - paused)
  - `gettime` : returns timer time left in ms
+ - `preheat` : starts preheating
+ - `getpreheattime` : returns preheat time left in ms
+ - `preheatstop` : stops preheating
 
 -`<other>` : other arguments for diffrent object.
  
